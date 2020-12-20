@@ -1,15 +1,27 @@
 from __future__ import annotations
 
+import functools
+import re
 import traceback
 from types import TracebackType
-from typing import Any, Optional
+from typing import Any, Callable, List, Optional, TypeVar
 
 import lxml.html
 import requests
 
 from . import endpoints
+from .course import Course, CourseReference
 
 DOMAIN = 'www.gradescope.com'
+
+T = TypeVar('T')
+
+def _must_be_logged_in(func: Callable[..., T]) -> Callable[..., T]:
+    @functools.wraps(func)
+    def wrapper(self: Client, *args, **kwargs) -> T:
+        assert self.logged_in, 'Client must be logged in'
+        return func(self, *args, **kwargs)
+    return wrapper
 
 class Client:
     def __init__(self) -> None:
@@ -48,10 +60,39 @@ class Client:
             self.logged_in = True
         return success
 
+    @_must_be_logged_in
     def log_out(self) -> None:
-        assert self.logged_in, 'Client is not logged in'
         self._get(endpoints.LOGOUT, allow_redirects=False)
         self.logged_in = False
+
+    @_must_be_logged_in
+    def fetch_course_list(self) -> List[CourseReference]:
+        res = self._get(endpoints.HOME)
+        html = lxml.html.fromstring(res.text)
+
+        course_refs: List[CourseReference] = []
+
+        # Get courses.
+        term_elems = html.xpath('//*[contains(@class,"courseList--term")]')
+        for term_elem in term_elems:
+            term = term_elem.xpath('text()')[0]
+            course_box_elems = term_elem.xpath('following-sibling::*[contains(@class,"courseList--coursesForTerm")]'
+                                               '//a[contains(@class,"courseBox")]')
+            for course_box_elem in course_box_elems:
+                href = course_box_elem.xpath('@href')[0]
+                short_name = course_box_elem.xpath('*[contains(@class,"courseBox--shortname")]/text()')[0]
+                name = course_box_elem.xpath('*[contains(@class,"courseBox--name")]/text()')[0]
+                assignments_text = course_box_elem.xpath('*[contains(@class,"courseBox--assignments")]/text()')[0]
+                match = re.match('/courses/(\d+)', href)
+                assert match is not None, "Can't extract course ID from href"
+                course_id = int(match.groups(1)[0])
+                match = re.match('(\d+) assignments?', assignments_text)
+                assert match is not None, "Can't extract assignments from text"
+                num_assignments = int(match.groups(1)[0])
+                course_refs.append(CourseReference(course_id, short_name, name,
+                                                   term, num_assignments))
+
+        return course_refs
 
     def _get(self, *args, **kwargs) -> requests.Response:
         """Makes a GET request with the session, saving any CSRF token that is
