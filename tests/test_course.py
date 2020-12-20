@@ -37,7 +37,7 @@ class TestCourse(unittest.TestCase):
         course = client.fetch_course(course_id)
         self.assertIsNotNone(course)
         assert course is not None # Hint to type checker.
-        self.assertTrue(course.course_id == 217765 
+        self.assertTrue(course.course_id == 217765
                             and course.short_name == 'GSAPI 101' \
                             and course.name == 'Gradescope API Automated Testing Bed' \
                             and course.term == 'Fall 2020')

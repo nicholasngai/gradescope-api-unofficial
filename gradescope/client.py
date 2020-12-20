@@ -1,10 +1,8 @@
 from __future__ import annotations
 
-import functools
 import re
-import traceback
 from types import TracebackType
-from typing import Any, Callable, List, Optional, TypeVar, Union
+from typing import Any, List, Optional
 
 import lxml.html
 import requests
@@ -13,15 +11,6 @@ from . import endpoints
 from .course import Course
 
 DOMAIN = 'www.gradescope.com'
-
-T = TypeVar('T')
-
-def _must_be_logged_in(func: Callable[..., T]) -> Callable[..., T]:
-    @functools.wraps(func)
-    def wrapper(self: Client, *args, **kwargs) -> T:
-        assert self.logged_in, 'Client must be logged in'
-        return func(self, *args, **kwargs)
-    return wrapper
 
 class Client:
     def __init__(self) -> None:
@@ -60,19 +49,20 @@ class Client:
             self.logged_in = True
         return success
 
-    @_must_be_logged_in
     def log_out(self) -> None:
         """Logs out of Gradescope. Must be logged in to call this function."""
+        self._assert_logged_in()
         self._get(endpoints.LOGOUT, allow_redirects=False)
         self.logged_in = False
 
-    @_must_be_logged_in
     def fetch_course_list(self) -> List[Course]:
         """Fetches the list of courses the client is enrolled in or teaches.
 
         :returns: A list of courses the client is enrolled in or teaches.
         :rtype: list[Course]
         """
+        self._assert_logged_in()
+
         res = self._get(endpoints.HOME)
         html = lxml.html.fromstring(res.text)
 
@@ -95,7 +85,6 @@ class Client:
 
         return courses
 
-    @_must_be_logged_in
     def fetch_course(self, course_id: int) -> Optional[Course]:
         """Fetches the course with the given ID. Returns None if not
         accessible.
@@ -105,6 +94,8 @@ class Client:
         :returns: The course, if found.
         :rtype: Optional[Course]
         """
+        self._assert_logged_in()
+
         res = self._get(endpoints.HOME)
         html = lxml.html.fromstring(res.text)
 
@@ -137,6 +128,9 @@ class Client:
         res = self._session.post(*args, **kwargs)
         # TODO Extract CSRF token if present.
         return res
+
+    def _assert_logged_in(self) -> None:
+        assert self.logged_in, 'Client must be logged in'
 
     def __enter__(self) -> Client:
         return self
