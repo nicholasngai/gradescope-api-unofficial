@@ -62,11 +62,17 @@ class Client:
 
     @_must_be_logged_in
     def log_out(self) -> None:
+        """Logs out of Gradescope. Must be logged in to call this function."""
         self._get(endpoints.LOGOUT, allow_redirects=False)
         self.logged_in = False
 
     @_must_be_logged_in
     def fetch_course_list(self) -> List[CourseReference]:
+        """Fetches the list of courses the client is enrolled in or teaches.
+
+        :returns: A list of courses the client is enrolled in or teaches.
+        :rtype: list[CourseReference]
+        """
         res = self._get(endpoints.HOME)
         html = lxml.html.fromstring(res.text)
 
