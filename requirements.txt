@@ -1,0 +1,4 @@
+lxml==4.6.2
+lxml-stubs==0.1.1
+mypy==0.790
+requests==2.25.1
