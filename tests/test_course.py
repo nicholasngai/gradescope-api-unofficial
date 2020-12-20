@@ -11,19 +11,33 @@ class TestCourse(unittest.TestCase):
         course101_found = False
         course102_found = False
         course103_found = False
-        for ref in course_list:
-            if ref.course_id == 217765 and ref.short_name == 'GSAPI 101' \
-                    and ref.name == 'Gradescope API Automated Testing Bed' \
-                    and ref.term == 'Fall 2020' and ref.num_assignments == 0:
+        for course in course_list:
+            if course.course_id == 217765 \
+                    and course.short_name == 'GSAPI 101' \
+                    and course.name == 'Gradescope API Automated Testing Bed' \
+                    and course.term == 'Fall 2020':
                 course101_found = True
-            elif ref.course_id == 217774 and ref.short_name == 'GSAPI 102' \
-                    and ref.name == 'Gradescope API Automated Testing Bed' \
-                    and ref.term == 'Fall 2020' and ref.num_assignments == 0:
+            elif course.course_id == 217774 \
+                    and course.short_name == 'GSAPI 102' \
+                    and course.name == 'Gradescope API Automated Testing Bed' \
+                    and course.term == 'Fall 2020':
                 course102_found = True
-            elif ref.course_id == 217813 and ref.short_name == 'GSAPI 103' \
-                    and ref.name == 'Gradescope API Automated Testing Bed' \
-                    and ref.term == 'Fall 2020' and ref.num_assignments == 0:
+            elif course.course_id == 217813 \
+                    and course.short_name == 'GSAPI 103' \
+                    and course.name == 'Gradescope API Automated Testing Bed' \
+                    and course.term == 'Fall 2020':
                 course103_found = True
         self.assertTrue(course101_found, 'Missing GSAPI 101')
         self.assertTrue(course102_found, 'Missing GSAPI 102')
         self.assertTrue(course103_found, 'Missing GSAPI 103')
+
+    @utils.with_login_client
+    def test_fetch_course(self, client: Client) -> None:
+        course_id = 217765 # GSAPI 101.
+        course = client.fetch_course(course_id)
+        self.assertIsNotNone(course)
+        assert course is not None # Hint to type checker.
+        self.assertTrue(course.course_id == 217765 
+                            and course.short_name == 'GSAPI 101' \
+                            and course.name == 'Gradescope API Automated Testing Bed' \
+                            and course.term == 'Fall 2020')

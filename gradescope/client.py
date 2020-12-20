@@ -4,13 +4,13 @@ import functools
 import re
 import traceback
 from types import TracebackType
-from typing import Any, Callable, List, Optional, TypeVar
+from typing import Any, Callable, List, Optional, TypeVar, Union
 
 import lxml.html
 import requests
 
 from . import endpoints
-from .course import Course, CourseReference
+from .course import Course
 
 DOMAIN = 'www.gradescope.com'
 
@@ -67,16 +67,16 @@ class Client:
         self.logged_in = False
 
     @_must_be_logged_in
-    def fetch_course_list(self) -> List[CourseReference]:
+    def fetch_course_list(self) -> List[Course]:
         """Fetches the list of courses the client is enrolled in or teaches.
 
         :returns: A list of courses the client is enrolled in or teaches.
-        :rtype: list[CourseReference]
+        :rtype: list[Course]
         """
         res = self._get(endpoints.HOME)
         html = lxml.html.fromstring(res.text)
 
-        course_refs: List[CourseReference] = []
+        courses: List[Course] = []
 
         # Get courses.
         term_elems = html.xpath('//*[contains(@class,"courseList--term")]')
@@ -88,17 +88,39 @@ class Client:
                 href = course_box_elem.xpath('@href')[0]
                 short_name = course_box_elem.xpath('*[contains(@class,"courseBox--shortname")]/text()')[0]
                 name = course_box_elem.xpath('*[contains(@class,"courseBox--name")]/text()')[0]
-                assignments_text = course_box_elem.xpath('*[contains(@class,"courseBox--assignments")]/text()')[0]
                 match = re.match('/courses/(\d+)', href)
                 assert match is not None, "Can't extract course ID from href"
                 course_id = int(match.groups(1)[0])
-                match = re.match('(\d+) assignments?', assignments_text)
-                assert match is not None, "Can't extract assignments from text"
-                num_assignments = int(match.groups(1)[0])
-                course_refs.append(CourseReference(course_id, short_name, name,
-                                                   term, num_assignments))
+                courses.append(Course(self, course_id, short_name, name, term))
 
-        return course_refs
+        return courses
+
+    @_must_be_logged_in
+    def fetch_course(self, course_id: int) -> Optional[Course]:
+        """Fetches the course with the given ID. Returns None if not
+        accessible.
+
+        :param course_id: The ID of the course.
+        :type course_id: int
+        :returns: The course, if found.
+        :rtype: Optional[Course]
+        """
+        res = self._get(endpoints.HOME)
+        html = lxml.html.fromstring(res.text)
+
+        # Get course.
+        term_elems = html.xpath(f'//*[contains(@class,"courseList--term") and //a[contains(@href,"/courses/{course_id}")]]')
+        if len(term_elems) == 0:
+            # Course was not found.
+            return None
+        term_elem = term_elems[0]
+        term = term_elem.xpath('text()')[0]
+        course_box_elem = term_elem.xpath('following-sibling::*[contains(@class,"courseList--coursesForTerm")]'
+                                '//a[contains(@class,"courseBox")]')[0]
+        short_name = course_box_elem.xpath('*[contains(@class,"courseBox--shortname")]/text()')[0]
+        name = course_box_elem.xpath('*[contains(@class,"courseBox--name")]/text()')[0]
+
+        return Course(self, course_id, short_name, name, term)
 
     def _get(self, *args, **kwargs) -> requests.Response:
         """Makes a GET request with the session, saving any CSRF token that is
