@@ -107,7 +107,7 @@ class Client:
         term_elem = term_elems[0]
         term = term_elem.xpath('text()')[0]
         course_box_elem = term_elem.xpath('following-sibling::*[contains(@class,"courseList--coursesForTerm")]'
-                                '//a[contains(@class,"courseBox")]')[0]
+                                          f'//a[contains(@href,"/courses/{course_id}")]')[0]
         short_name = course_box_elem.xpath('*[contains(@class,"courseBox--shortname")]/text()')[0]
         name = course_box_elem.xpath('*[contains(@class,"courseBox--name")]/text()')[0]
 

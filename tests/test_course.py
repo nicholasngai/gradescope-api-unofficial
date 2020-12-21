@@ -33,11 +33,16 @@ class TestCourse(unittest.TestCase):
 
     @utils.with_login_client
     def test_fetch_course(self, client: Client) -> None:
-        course_id = 217765 # GSAPI 101.
-        course = client.fetch_course(course_id)
+        course = client.fetch_course(217765) # GSAPI 101.
         self.assertIsNotNone(course)
         assert course is not None # Hint to type checker.
-        self.assertTrue(course.course_id == 217765
+        self.assertTrue(course.course_id == 217765 \
                             and course.short_name == 'GSAPI 101' \
                             and course.name == 'Gradescope API Automated Testing Bed' \
-                            and course.term == 'Fall 2020')
+                            and course.term == 'Fall 2020',
+                        f'Incorrect course; got: {course}')
+
+    @utils.with_login_client
+    def test_fetch_invalid_course(self, client: Client) -> None:
+        course = client.fetch_course(1) # Some invalid course ID.
+        self.assertIsNone(course)
