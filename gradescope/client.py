@@ -69,6 +69,7 @@ class Client:
         courses: List[Course] = []
 
         # Get courses.
+        # TODO We can check if we are instructor for a course here.
         term_elems = html.xpath('//*[contains(@class,"courseList--term")]')
         for term_elem in term_elems:
             term = term_elem.xpath('text()')[0]
@@ -78,7 +79,7 @@ class Client:
                 href = course_box_elem.xpath('@href')[0]
                 short_name = course_box_elem.xpath('*[contains(@class,"courseBox--shortname")]/text()')[0]
                 name = course_box_elem.xpath('*[contains(@class,"courseBox--name")]/text()')[0]
-                match = re.match('/courses/(\d+)', href)
+                match = re.search('/courses/(\d+)', href)
                 assert match is not None, "Can't extract course ID from href"
                 course_id = int(match.groups(1)[0])
                 courses.append(Course(self, course_id, short_name, name, term))
@@ -100,6 +101,7 @@ class Client:
         html = lxml.html.fromstring(res.text)
 
         # Get course.
+        # TODO We can check if we are instructor for a course here.
         term_elems = html.xpath(f'//*[contains(@class,"courseList--term") and //a[contains(@href,"/courses/{course_id}")]]')
         if len(term_elems) == 0:
             # Course was not found.
