@@ -38,13 +38,10 @@ class Client:
         :returns: Whether the login was successful.
         :rtype: bool
         """
-        # Get an authenticity token (separate from a CSRF token).
+        # This is likely the first request, so use a _get call to store a CSRF
+        # token.
         res = self._get(endpoints.LOGIN)
-        html = lxml.html.fromstring(res.text)
-        authenticity_token = \
-                html.xpath('//input[@name="authenticity_token"]/@value')[0]
         res = self._post(endpoints.LOGIN, data={
-            'authenticity_token': authenticity_token,
             'session[email]': username,
             'session[password]': password
         }, allow_redirects=False)
@@ -117,15 +114,32 @@ class Client:
         returned.
         """
         res = self._session.get(*args, **kwargs)
-        # TODO Extract CSRF token if present.
+        # TODO Extract CSRF token if redirected.
+        if res.headers['Content-Type'].startswith('text/html'):
+            # Extract CSRF token from HTML.
+            html = lxml.html.fromstring(res.text)
+            tokens = html.xpath('//meta[@name="csrf-token"]/@content')
+            if len(tokens) > 0:
+                self._csrf_token = tokens[0]
         return res
 
     def _post(self, *args, **kwargs) -> requests.Response:
         """Makes a POST request with the session, saving any CSRF token that is
         returned.
         """
+        # Inject the CSRF token by default if not manually set (or data is not
+        # present).
+        kwargs['data'] = dict({ 'authenticity_token': self._csrf_token },
+                              **kwargs.get('data', {}))
+
         res = self._session.post(*args, **kwargs)
-        # TODO Extract CSRF token if present.
+        # TODO Extract CSRF token if redirected.
+        if res.headers['Content-Type'].startswith('text/html'):
+            # Extract CSRF token from HTML.
+            html = lxml.html.fromstring(res.text)
+            tokens = html.xpath('//meta[@name="csrf-token"]/@content')
+            if len(tokens) > 0:
+                self._csrf_token = tokens[0]
         return res
 
     def __enter__(self) -> Client:
