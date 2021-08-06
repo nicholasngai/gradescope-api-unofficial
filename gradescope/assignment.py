@@ -38,9 +38,9 @@ class Assignment:
         """Student-inputted online assignment."""
         ONLINE = enum.auto()
 
+    id: int
     _client: Client = field(repr=False, hash=False, compare=False)
     _course: Course = field(repr=False, hash=False, compare=False)
-    id: int
 
     _name: Optional[str] = field(default=None, repr=False, hash=False,
                                  compare=False)

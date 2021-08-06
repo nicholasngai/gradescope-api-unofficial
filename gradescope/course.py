@@ -27,8 +27,8 @@ def _require_instructor(func):
 
 @dataclass
 class Course:
-    _client: Client = field(repr=False, hash=False, compare=False)
     id: int
+    _client: Client = field(repr=False, hash=False, compare=False)
 
     _is_instructor: Optional[bool] = field(default=None, repr=False,
                                            hash=False, compare=False)
@@ -205,9 +205,9 @@ class Course:
                 assert match is not None, \
                         "Can't extract assignment ID from href"
                 assignment_id = int(match.groups(1)[0])
-                assignments.append(Assignment(_client=self._client,
-                                              _course=self, id=assignment_id,
-                                              _name=name))
+                assignments.append(Assignment(id=assignment_id,
+                                              _client=self._client,
+                                              _course=self, _name=name))
         elif not self._is_instructor:
             # We are a student. This is not supported yet.
             raise NotImplementedError('Student views are not implemented')

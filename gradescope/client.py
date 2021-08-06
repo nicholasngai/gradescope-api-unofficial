@@ -81,7 +81,7 @@ class Client:
                 match = re.search('/courses/(\d+)', href)
                 assert match is not None, "Can't extract course ID from href"
                 course_id = int(match.groups(1)[0])
-                courses.append(Course(self, id=course_id,
+                courses.append(Course(id=course_id, _client=self,
                                       _short_name=short_name, _name=name,
                                       _term=term))
 
@@ -110,8 +110,8 @@ class Client:
         name = course_box_elem.xpath('*[contains(@class,"courseBox--name")]/text()')[0]
         term = Term.parse(course_box_elem.xpath('preceding::*[contains(@class,"courseList--term")][1]/text()')[0])
 
-        return Course(self, id=course_id, _short_name=short_name, _name=name,
-                      _term=term)
+        return Course(id=course_id, _client=self, _short_name=short_name,
+                      _name=name, _term=term)
 
     def _get(self, *args, **kwargs) -> requests.Response:
         """Makes a GET request with the session, saving any CSRF token that is
