@@ -10,5 +10,5 @@ if TYPE_CHECKING:
 @dataclass(frozen=True)
 class Assignment:
     _client: Client = field(repr=False, hash=False, compare=False)
-    assignment_id: int
+    id: int
     name: str

@@ -22,3 +22,11 @@ class TestClient(unittest.TestCase):
             with Client('invalid@example.com', 'credentials') as client:
                 pass
 
+    @utils.with_login_client
+    def test_fetch_course_list(self, client: Client) -> None:
+        course_list = client.fetch_course_list()
+        course_ids = [course.id for course in course_list]
+        self.assertIn(217765, course_ids, 'Missing GSAPI 101')
+        self.assertIn(217765, course_ids, 'Missing GSAPI 102')
+        self.assertIn(217813, course_ids, 'Missing GSAPI 103')
+

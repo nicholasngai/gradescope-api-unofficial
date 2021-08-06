@@ -15,7 +15,7 @@ if TYPE_CHECKING:
 @dataclass
 class Course:
     _client: Client = field(repr=False, hash=False, compare=False)
-    course_id: int
+    id: int
     short_name: str
     name: str
     term: str
@@ -37,7 +37,7 @@ class Course:
             # Try fetching the course editing endpoint to see if we can
             # successfully access it.
             res = self._client._get(endpoints.COURSE_ASSIGNMENTS.substitute(
-                course_id=self.course_id))
+                course_id=self.id))
             self._is_instructor = res.status_code == 200
         return self._is_instructor
 
@@ -54,8 +54,8 @@ class Course:
         return self._description
 
     def get_assignments(self) -> List[Assignment]:
-        """Fetches the list of assignments in the course. Raises an error if
-        you are not an instructor of the course.
+        """Returns the list of assignments in the course. Raises an error if you
+        are not an instructor of the course.
 
         :returns: A list of assignments.
         :rtype: list[Assignment]
@@ -63,7 +63,7 @@ class Course:
         if self.is_instructor:
             # We are an instructor.
             res = self._client._get(endpoints.COURSE_ASSIGNMENTS.substitute(
-                course_id=self.course_id))
+                course_id=self.id))
             html = lxml.html.fromstring(res.text)
 
             # Read courses from the HTML.
@@ -92,8 +92,7 @@ class Course:
         dashboard.
         """
         # Fetch description from the dashboard.
-        res = self._client._get(endpoints.COURSE.substitute(
-            course_id=self.course_id))
+        res = self._client._get(endpoints.COURSE.substitute(course_id=self.id))
         html = lxml.html.fromstring(res.text)
 
         # Get description from the HTML.
