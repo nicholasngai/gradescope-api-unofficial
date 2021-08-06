@@ -101,16 +101,14 @@ class Client:
 
         # Get course.
         # TODO We can check if we are instructor for a course here.
-        term_elems = html.xpath(f'//*[contains(@class,"courseList--term") and //a[contains(@href,"/courses/{course_id}")]]')
-        if len(term_elems) == 0:
+        course_box_elems = html.xpath(f'//a[contains(@href,"/courses/{course_id}")]')
+        if len(course_box_elems) == 0:
             # Course was not found.
             return None
-        term_elem = term_elems[0]
-        term = term_elem.xpath('text()')[0]
-        course_box_elem = term_elem.xpath('following-sibling::*[contains(@class,"courseList--coursesForTerm")]'
-                                          f'//a[contains(@href,"/courses/{course_id}")]')[0]
+        course_box_elem = course_box_elems[0]
         short_name = course_box_elem.xpath('*[contains(@class,"courseBox--shortname")]/text()')[0]
         name = course_box_elem.xpath('*[contains(@class,"courseBox--name")]/text()')[0]
+        term = course_box_elem.xpath('preceding::*[contains(@class,"courseList--term")][1]/text()')[0]
 
         return Course(self, course_id, short_name, name, term)
 
