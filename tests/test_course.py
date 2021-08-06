@@ -1,6 +1,6 @@
 import unittest
 
-from gradescope import Client, Course
+from gradescope import Client, Course, Term
 
 from . import utils
 
@@ -13,7 +13,8 @@ class TestCourse(unittest.TestCase):
                          'Incorrect course short name')
         self.assertEqual(course.get_name(), 'Gradescope API Automated Testing Bed',
                          'Incorrect course name')
-        self.assertEqual(course.get_term(), 'Fall 2020', 'Incorrect course term')
+        self.assertEqual(course.get_term(), Term(Term.Season.FALL, 2020),
+                         'Incorrect course term')
         self.assertTrue(course.is_instructor, 'Should be instructor')
 
     @utils.with_login_client
@@ -23,7 +24,8 @@ class TestCourse(unittest.TestCase):
                          'Incorrect course short name')
         self.assertEqual(course.get_name(), 'Gradescope API Automated Testing Bed',
                          'Incorrect course name')
-        self.assertEqual(course.get_term(), 'Fall 2020', 'Incorrect course term')
+        self.assertEqual(course.get_term(), Term(Term.Season.FALL, 2020),
+                         'Incorrect course term')
         self.assertFalse(course.is_instructor, 'Should not be instructor')
 
     @utils.with_login_client

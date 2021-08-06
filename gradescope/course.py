@@ -8,6 +8,7 @@ import lxml.html
 
 from . import endpoints
 from .assignment import Assignment
+from .term import Term
 
 if TYPE_CHECKING:
     from .client import Client
@@ -23,8 +24,8 @@ class Course:
                                        compare=False)
     _name: Optional[str] = field(default=None, repr=False, hash=False,
                                  compare=False)
-    _term: Optional[str] = field(default=None, repr=False, hash=False,
-                                 compare=False)
+    _term: Optional[Term] = field(default=None, repr=False, hash=False,
+                                  compare=False)
     _description: Optional[str] = field(default=None, repr=False, hash=False,
                                         compare=False)
 
@@ -75,14 +76,14 @@ class Course:
                     'Error getting name from dashboard'
         return self._name
 
-    def get_term(self, *, force_update: bool=False) -> str:
+    def get_term(self, *, force_update: bool=False) -> Term:
         """Returns the course's term.
 
         :param force_update: If True, force an update instead of using the
         locally cached data.
         :type force_update: bool
         :returns: The course term.
-        :rtype: str
+        :rtype: Term
         """
         if self._term is None or force_update:
             self._read_dashboard()

@@ -10,6 +10,7 @@ import requests
 from . import endpoints
 from .course import Course
 from .error import GSInvalidRequestException
+from .term import Term
 
 DOMAIN = 'www.gradescope.com'
 
@@ -70,7 +71,7 @@ class Client:
         # TODO We can check if we are instructor for a course here.
         term_elems = html.xpath('//*[contains(@class,"courseList--term")]')
         for term_elem in term_elems:
-            term = term_elem.xpath('text()')[0]
+            term = Term.parse(term_elem.xpath('text()')[0])
             course_box_elems = term_elem.xpath('following-sibling::*[contains(@class,"courseList--coursesForTerm")]'
                                                '//a[contains(@class,"courseBox")]')
             for course_box_elem in course_box_elems:
@@ -107,7 +108,7 @@ class Client:
         course_box_elem = course_box_elems[0]
         short_name = course_box_elem.xpath('*[contains(@class,"courseBox--shortname")]/text()')[0]
         name = course_box_elem.xpath('*[contains(@class,"courseBox--name")]/text()')[0]
-        term = course_box_elem.xpath('preceding::*[contains(@class,"courseList--term")][1]/text()')[0]
+        term = Term.parse(course_box_elem.xpath('preceding::*[contains(@class,"courseList--term")][1]/text()')[0])
 
         return Course(self, id=course_id, _short_name=short_name, _name=name,
                       _term=term)
@@ -116,6 +117,9 @@ class Client:
         """Makes a GET request with the session, saving any CSRF token that is
         returned.
         """
+        # Default disallow redirects.
+        kwargs.setdefault('allow_redirects', False)
+
         res = self._session.get(*args, **kwargs)
         # TODO Extract CSRF token if redirected.
         if res.headers['Content-Type'].startswith('text/html'):
@@ -130,6 +134,8 @@ class Client:
         """Makes a POST request with the session, saving any CSRF token that is
         returned.
         """
+        # Default disallow redirects.
+        kwargs.setdefault('allow_redirects', False)
         # Inject the CSRF token by default if not manually set (or data is not
         # present).
         kwargs['data'] = dict({ 'authenticity_token': self._csrf_token },
