@@ -205,13 +205,28 @@ class Course:
                 assert match is not None, \
                         "Can't extract assignment ID from href"
                 assignment_id = int(match.groups(1)[0])
-                assignments.append(Assignment(self._client, assignment_id,
-                                              name))
+                assignments.append(Assignment(_client=self._client,
+                                              _course=self, id=assignment_id,
+                                              _name=name))
         elif not self._is_instructor:
             # We are a student. This is not supported yet.
             raise NotImplementedError('Student views are not implemented')
 
         return assignments
+
+    def get_assignment(self, assignment_id: int) -> Optional[Assignment]:
+        """Returns the assignment with the given ID, if it exists.
+
+        :param assignment_id: The ID of the assignment.
+        :type assignment_id: int
+        :returns: The assignment if it exists or None otherwise.
+        :rtype: Optional[Assignment]
+        """
+        assignments = self.get_assignments()
+        for assignment in assignments:
+            if assignment.id == assignment_id:
+                return assignment
+        return None
 
     def _read_dashboard(self) -> None:
         """Sets locally cached variables based on information available in the

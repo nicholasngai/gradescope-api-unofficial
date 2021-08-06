@@ -29,4 +29,3 @@ class TestClient(unittest.TestCase):
         self.assertIn(217765, course_ids, 'Missing GSAPI 101')
         self.assertIn(217765, course_ids, 'Missing GSAPI 102')
         self.assertIn(217813, course_ids, 'Missing GSAPI 103')
-

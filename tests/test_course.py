@@ -50,19 +50,6 @@ class TestCourse(unittest.TestCase):
                          'Incorrect course description')
 
     @utils.with_login_client
-    @utils.with_course(217765) # GSAPI 101.
-    def test_assignment_list(self, client: Client, course: Course) -> None:
-        assignments = course.get_assignments()
-        assignment_ids = [assignment.id for assignment in assignments]
-        self.assertIn(910142, assignment_ids, 'Missing Test Homework')
-        self.assertIn(910133, assignment_ids, 'Missing Test Exam')
-        self.assertIn(910152, assignment_ids, 'Missing Test Online Homework')
-        self.assertIn(910153, assignment_ids, 'Missing Test Online Exam')
-        self.assertIn(1400962, assignment_ids, 'Missing Test Bubble Sheet')
-        self.assertIn(1400964, assignment_ids,
-                      'Missing Test Programming Assignment')
-
-    @utils.with_login_client
     @utils.with_course(217774) # GSAPI 102. (Might be a different name.)
     def test_set_short_name(self, client: Client, course: Course) -> None:
         course.set_short_name('GSAPI 112')
@@ -107,3 +94,16 @@ class TestCourse(unittest.TestCase):
             course.set_term(Term(Term.Season.SPRING, 2021))
         with self.assertRaises(GSNotAuthorizedException):
             course.set_description('Changed description.')
+
+    @utils.with_login_client
+    @utils.with_course(217765) # GSAPI 101.
+    def test_assignment_list(self, client: Client, course: Course) -> None:
+        assignments = course.get_assignments()
+        assignment_ids = [assignment.id for assignment in assignments]
+        self.assertIn(910142, assignment_ids, 'Missing Test Homework')
+        self.assertIn(910133, assignment_ids, 'Missing Test Exam')
+        self.assertIn(910152, assignment_ids, 'Missing Test Online Homework')
+        self.assertIn(910153, assignment_ids, 'Missing Test Online Exam')
+        self.assertIn(1400962, assignment_ids, 'Missing Test Bubble Sheet')
+        self.assertIn(1400964, assignment_ids,
+                      'Missing Test Programming Assignment')
