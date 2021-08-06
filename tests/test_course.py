@@ -9,21 +9,21 @@ class TestCourse(unittest.TestCase):
     @utils.with_course(217765) # GSAPI 101.
     def test_instructor_course(self, client: Client, course: Course) -> None:
         self.assertEqual(course.id, 217765, 'Incorrect course ID')
-        self.assertEqual(course.short_name, 'GSAPI 101',
+        self.assertEqual(course.get_short_name(), 'GSAPI 101',
                          'Incorrect course short name')
-        self.assertEqual(course.name, 'Gradescope API Automated Testing Bed',
+        self.assertEqual(course.get_name(), 'Gradescope API Automated Testing Bed',
                          'Incorrect course name')
-        self.assertEqual(course.term, 'Fall 2020', 'Incorrect course term')
+        self.assertEqual(course.get_term(), 'Fall 2020', 'Incorrect course term')
         self.assertTrue(course.is_instructor, 'Should be instructor')
 
     @utils.with_login_client
     @utils.with_course(217813) # GSAPI 103.
     def test_student_course(self, client: Client, course: Course) -> None:
-        self.assertEqual(course.short_name, 'GSAPI 103',
+        self.assertEqual(course.get_short_name(), 'GSAPI 103',
                          'Incorrect course short name')
-        self.assertEqual(course.name, 'Gradescope API Automated Testing Bed',
+        self.assertEqual(course.get_name(), 'Gradescope API Automated Testing Bed',
                          'Incorrect course name')
-        self.assertEqual(course.term, 'Fall 2020', 'Incorrect course term')
+        self.assertEqual(course.get_term(), 'Fall 2020', 'Incorrect course term')
         self.assertFalse(course.is_instructor, 'Should not be instructor')
 
     @utils.with_login_client

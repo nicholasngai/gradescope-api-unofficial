@@ -16,12 +16,15 @@ if TYPE_CHECKING:
 class Course:
     _client: Client = field(repr=False, hash=False, compare=False)
     id: int
-    short_name: str
-    name: str
-    term: str
 
     _is_instructor: Optional[bool] = field(default=None, repr=False,
                                            hash=False, compare=False)
+    _short_name: Optional[str] = field(default=None, repr=False, hash=False,
+                                       compare=False)
+    _name: Optional[str] = field(default=None, repr=False, hash=False,
+                                 compare=False)
+    _term: Optional[str] = field(default=None, repr=False, hash=False,
+                                 compare=False)
     _description: Optional[str] = field(default=None, repr=False, hash=False,
                                         compare=False)
 
@@ -41,16 +44,65 @@ class Course:
             self._is_instructor = res.status_code == 200
         return self._is_instructor
 
-    def get_description(self) -> str:
+    def get_short_name(self, *, force_update: bool=False) -> str:
+        """Returns the course's short name, typically in the form of 'DEPT
+        XXX'.
+
+        :param force_update: If True, force an update instead of using the
+        locally cached data.
+        :type force_update: bool
+        :returns: The course short name.
+        :rtype: str
+        """
+        if self._short_name is None or force_update:
+            self._read_dashboard()
+            assert self._short_name is not None, \
+                    'Error getting short name from dashboard'
+        return self._short_name
+
+    def get_name(self, *, force_update: bool=False) -> str:
+        """Returns the course's full name.
+
+        :param force_update: If True, force an update instead of using the
+        locally cached data.
+        :type force_update: bool
+        :returns: The course full name.
+        :rtype: str
+        """
+        if self._name is None or force_update:
+            self._read_dashboard()
+            assert self._name is not None, \
+                    'Error getting name from dashboard'
+        return self._name
+
+    def get_term(self, *, force_update: bool=False) -> str:
+        """Returns the course's term.
+
+        :param force_update: If True, force an update instead of using the
+        locally cached data.
+        :type force_update: bool
+        :returns: The course term.
+        :rtype: str
+        """
+        if self._term is None or force_update:
+            self._read_dashboard()
+            assert self._term is not None, \
+                    'Error getting term from dashboard'
+        return self._term
+
+    def get_description(self, *, force_update: bool=False) -> str:
         """Returns the description for the course.
 
+        :param force_update: If True, force an update instead of using the
+        locally cached data.
+        :type force_update: bool
         :returns: The course description.
         :rtype: str
         """
-        if self._description is None:
+        if self._description is None or force_update:
             self._read_dashboard()
             assert self._description is not None, \
-                'Error getting description from dashboard'
+                    'Error getting description from dashboard'
         return self._description
 
     def get_assignments(self) -> List[Assignment]:
