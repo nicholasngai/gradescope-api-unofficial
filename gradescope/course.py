@@ -30,8 +30,6 @@ class Course:
         :returns: A list of assignments.
         :rtype: list[Assignment]
         """
-        self._client._assert_logged_in()
-
         if self._is_instructor is None or self._is_instructor:
             # Either we are instructor or we don't know, so try making a
             # request to the assignments endpoint.

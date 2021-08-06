@@ -9,17 +9,26 @@ import requests
 
 from . import endpoints
 from .course import Course
+from .error import GSInvalidRequestException
 
 DOMAIN = 'www.gradescope.com'
 
 class Client:
-    def __init__(self) -> None:
-        self.logged_in = False
+    def __init__(self, username: str, password: str) -> None:
+        """Constructs a Gradescope client with the given credentials.
 
+        :param username: The username.
+        :type username: str
+        :param password: The password.
+        :type password: str
+        """
         self._session = requests.Session()
         self._csrf_token: Optional[str] = None
 
-    def log_in(self, username: str, password: str) -> bool:
+        if not self._log_in(username, password):
+            raise GSInvalidRequestException('Invalid username or password')
+
+    def _log_in(self, username: str, password: str) -> bool:
         """Logs into Gradescope with the given credentials.
 
         :param username: The username.
@@ -29,8 +38,6 @@ class Client:
         :returns: Whether the login was successful.
         :rtype: bool
         """
-        assert not self.logged_in, 'Client is already logged in'
-
         # Get an authenticity token (separate from a CSRF token).
         res = self._get(endpoints.LOGIN)
         html = lxml.html.fromstring(res.text)
@@ -45,15 +52,11 @@ class Client:
         # Return whether 'signed_token' is now a cookie we have.
         success = self._session.cookies.get('signed_token', domain=DOMAIN) \
                 is not None
-        if success:
-            self.logged_in = True
         return success
 
     def log_out(self) -> None:
         """Logs out of Gradescope. Must be logged in to call this function."""
-        self._assert_logged_in()
         self._get(endpoints.LOGOUT, allow_redirects=False)
-        self.logged_in = False
 
     def fetch_course_list(self) -> List[Course]:
         """Fetches the list of courses the client is enrolled in or teaches.
@@ -61,8 +64,6 @@ class Client:
         :returns: A list of courses the client is enrolled in or teaches.
         :rtype: list[Course]
         """
-        self._assert_logged_in()
-
         res = self._get(endpoints.HOME)
         html = lxml.html.fromstring(res.text)
 
@@ -95,8 +96,6 @@ class Client:
         :returns: The course, if found.
         :rtype: Optional[Course]
         """
-        self._assert_logged_in()
-
         res = self._get(endpoints.HOME)
         html = lxml.html.fromstring(res.text)
 
@@ -131,14 +130,9 @@ class Client:
         # TODO Extract CSRF token if present.
         return res
 
-    def _assert_logged_in(self) -> None:
-        assert self.logged_in, 'Client must be logged in'
-
     def __enter__(self) -> Client:
         return self
 
     def __exit__(self, exc_type: Optional[Exception], exc_val: Any,
                  exc_tb: Optional[TracebackType]) -> None:
-        if self.logged_in:
-            self.log_out()
         self._session.__exit__()

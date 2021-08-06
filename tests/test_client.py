@@ -1,7 +1,7 @@
 import os
 import unittest
 
-from gradescope import Client
+from gradescope import Client, GSInvalidRequestException
 
 from . import utils
 
@@ -17,7 +17,8 @@ class TestClient(unittest.TestCase):
 
     def test_login_invalid(self) -> None:
         """Tests a failed login because of invalid credentials."""
-        with Client() as client:
-            res = client.log_in('invalid@example.com', 'credentials')
-            self.assertFalse(res,
-                             'Login was successful with invalid credentials')
+        with self.assertRaises(GSInvalidRequestException,
+                msg='Login was successful with invalid credentials'):
+            with Client('invalid@example.com', 'credentials') as client:
+                pass
+

@@ -15,8 +15,6 @@ def with_login_client(func: Callable[[T, Client], None]):
     def wrapper(self: T) -> None:
         username = os.environ['GSAPI_USERNAME']
         password = os.environ['GSAPI_PASSWORD']
-        with Client() as client:
-            self.assertTrue(client.log_in(username, password),
-                            'Login was not successful with credentials')
+        with Client(username, password) as client:
             func(self, client)
     return wrapper
