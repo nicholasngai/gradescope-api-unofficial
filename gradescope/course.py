@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+import functools
 import re
 from typing import List, Optional, TYPE_CHECKING
 
@@ -8,10 +9,21 @@ import lxml.html
 
 from . import endpoints
 from .assignment import Assignment
+from .error import GSNotAuthorizedException
 from .term import Term
 
 if TYPE_CHECKING:
     from .client import Client
+
+# TODO I have no idea how to statically type this.
+def _require_instructor(func):
+    @functools.wraps(func)
+    def wrapper(self: Course, *args, **kwargs):
+        if not self.is_instructor:
+            raise GSNotAuthorizedException(
+                    'Must be instructor to execute this function')
+        return func(self, *args, **kwargs)
+    return wrapper
 
 @dataclass
 class Course:
@@ -61,6 +73,7 @@ class Course:
                     'Error getting short name from dashboard'
         return self._short_name
 
+    @_require_instructor
     def set_short_name(self, new_short_name: str) -> None:
         """Update the course's short name, typically in the form of 'DEPT XXX'.
 
@@ -90,6 +103,7 @@ class Course:
                     'Error getting name from dashboard'
         return self._name
 
+    @_require_instructor
     def set_name(self, new_name: str) -> None:
         """Update the course's full name.
 
@@ -119,6 +133,7 @@ class Course:
                     'Error getting term from dashboard'
         return self._term
 
+    @_require_instructor
     def set_term(self, new_term: Term) -> None:
         """Update the course's term.
 
@@ -149,6 +164,7 @@ class Course:
                     'Error getting description from dashboard'
         return self._description
 
+    @_require_instructor
     def set_description(self, new_description: str) -> None:
         """Update the course's description.
 

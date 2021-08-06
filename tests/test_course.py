@@ -1,6 +1,6 @@
 import unittest
 
-from gradescope import Client, Course, Term
+from gradescope import Client, Course, GSNotAuthorizedException, Term
 
 from . import utils
 
@@ -91,3 +91,16 @@ class TestCourse(unittest.TestCase):
         self.assertEqual(course.get_description(), 'Changed description.')
         course.set_description('')
         self.assertEqual(course.get_description(), '')
+
+    @utils.with_login_client
+    @utils.with_course(217813) # GSAPI 103.
+    def test_student_attempt_update(self, client: Client,
+                                    course: Course) -> None:
+        with self.assertRaises(GSNotAuthorizedException):
+            course.set_short_name('GSAPI 113')
+        with self.assertRaises(GSNotAuthorizedException):
+            course.set_name('Gradescope API Changed Name')
+        with self.assertRaises(GSNotAuthorizedException):
+            course.set_term(Term(Term.Season.SPRING, 2021))
+        with self.assertRaises(GSNotAuthorizedException):
+            course.set_description('Changed description.')
