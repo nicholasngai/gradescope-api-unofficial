@@ -27,6 +27,12 @@ class Course:
 
     @property
     def is_instructor(self) -> bool:
+        """Whether the client is an instructor for this course. Controls the
+        settings that the client has access to.
+
+        :returns: True if the client is an instuctor and False otherwise.
+        :rtype: bool
+        """
         if self._is_instructor is None:
             # Try fetching the course editing endpoint to see if we can
             # successfully access it.
@@ -36,15 +42,20 @@ class Course:
         return self._is_instructor
 
     def get_description(self) -> str:
+        """Returns the description for the course.
+
+        :returns: The course description.
+        :rtype: str
+        """
         if self._description is None:
             self._read_dashboard()
             assert self._description is not None, \
                 'Error getting description from dashboard'
         return self._description
 
-    def fetch_assignments(self) -> List[Assignment]:
+    def get_assignments(self) -> List[Assignment]:
         """Fetches the list of assignments in the course. Raises an error if
-        you are not an instructor of the course..
+        you are not an instructor of the course.
 
         :returns: A list of assignments.
         :rtype: list[Assignment]
@@ -77,6 +88,9 @@ class Course:
         return assignments
 
     def _read_dashboard(self) -> None:
+        """Sets locally cached variables based on information available in the
+        dashboard.
+        """
         # Fetch description from the dashboard.
         res = self._client._get(endpoints.COURSE.substitute(
             course_id=self.course_id))
