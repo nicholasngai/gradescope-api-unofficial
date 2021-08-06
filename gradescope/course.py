@@ -23,6 +23,16 @@ class Course:
     _is_instructor: Optional[bool] = field(default=None, repr=False,
                                            hash=False, compare=False)
 
+    @property
+    def is_instructor(self) -> bool:
+        if self._is_instructor is None:
+            # Try fetching the course editing endpoint to see if we can
+            # successfully access it.
+            res = self._client._get(endpoints.COURSE_ASSIGNMENTS.substitute(
+                course_id=self.course_id))
+            self._is_instructor = res.status_code == 200
+        return self._is_instructor
+
     def fetch_assignments(self) -> List[Assignment]:
         """Fetches the list of assignments in the course. Raises an error if
         you are not an instructor of the course..
@@ -30,22 +40,10 @@ class Course:
         :returns: A list of assignments.
         :rtype: list[Assignment]
         """
-        if self._is_instructor is None or self._is_instructor:
-            # Either we are instructor or we don't know, so try making a
-            # request to the assignments endpoint.
+        if self.is_instructor:
+            # We are an instructor.
             res = self._client._get(endpoints.COURSE_ASSIGNMENTS.substitute(
                 course_id=self.course_id))
-            if self._is_instructor is None:
-                if res.status_code != 200:
-                    # We learned that we are not the instructor. Set the flag
-                    # and try again.
-                    self._is_instructor = False
-                    return self.fetch_assignments()
-                else:
-                    # Else, set the flag, and we can safely continue to the
-                    # main instructor handler.
-                    self._is_instructor = True
-
             html = lxml.html.fromstring(res.text)
 
             # Read courses from the HTML.
