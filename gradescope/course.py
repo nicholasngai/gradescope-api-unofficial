@@ -22,6 +22,8 @@ class Course:
 
     _is_instructor: Optional[bool] = field(default=None, repr=False,
                                            hash=False, compare=False)
+    _description: Optional[str] = field(default=None, repr=False, hash=False,
+                                        compare=False)
 
     @property
     def is_instructor(self) -> bool:
@@ -32,6 +34,13 @@ class Course:
                 course_id=self.course_id))
             self._is_instructor = res.status_code == 200
         return self._is_instructor
+
+    def get_description(self) -> str:
+        if self._description is None:
+            self._read_dashboard()
+            assert self._description is not None, \
+                'Error getting description from dashboard'
+        return self._description
 
     def fetch_assignments(self) -> List[Assignment]:
         """Fetches the list of assignments in the course. Raises an error if
@@ -66,3 +75,13 @@ class Course:
             raise NotImplementedError('Student views are not implemented')
 
         return assignments
+
+    def _read_dashboard(self) -> None:
+        # Fetch description from the dashboard.
+        res = self._client._get(endpoints.COURSE.substitute(
+            course_id=self.course_id))
+        html = lxml.html.fromstring(res.text)
+
+        # Get description from the HTML.
+        descriptions: List[str] = html.xpath('//*[contains(@class,"courseDashboard--panel-description")]//p/text()')
+        self._description = '\n\n'.join(descriptions)

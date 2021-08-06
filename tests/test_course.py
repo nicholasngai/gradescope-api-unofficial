@@ -57,6 +57,24 @@ class TestCourse(unittest.TestCase):
         self.assertFalse(course.is_instructor, 'Should not be instructor')
 
     @utils.with_login_client
+    def test_fetch_student_course_description(self, client: Client) -> None:
+        course = client.fetch_course(217765) # GSAPI 101.
+        self.assertIsNotNone(course)
+        assert course is not None # Hint to type checker.
+        self.assertEqual(course.get_description(),
+                         'A description for GSAPI 101.',
+                         'Incorrect course description')
+
+    @utils.with_login_client
+    def test_fetch_student_course_description(self, client: Client) -> None:
+        course = client.fetch_course(217813) # GSAPI 103.
+        self.assertIsNotNone(course)
+        assert course is not None # Hint to type checker.
+        self.assertEqual(course.get_description(),
+                         'A description for GSAPI 103.',
+                         'Incorrect course description')
+
+    @utils.with_login_client
     def test_fetch_invalid_course(self, client: Client) -> None:
         course = client.fetch_course(1) # Some invalid course ID.
         self.assertIsNone(course)
