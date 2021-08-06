@@ -58,6 +58,9 @@ class TestCourse(unittest.TestCase):
         self.assertIn(910133, assignment_ids, 'Missing Test Exam')
         self.assertIn(910152, assignment_ids, 'Missing Test Online Homework')
         self.assertIn(910153, assignment_ids, 'Missing Test Online Exam')
+        self.assertIn(1400962, assignment_ids, 'Missing Test Bubble Sheet')
+        self.assertIn(1400964, assignment_ids,
+                      'Missing Test Programming Assignment')
 
     @utils.with_login_client
     @utils.with_course(217774) # GSAPI 102. (Might be a different name.)
