@@ -61,6 +61,20 @@ class Course:
                     'Error getting short name from dashboard'
         return self._short_name
 
+    def set_short_name(self, new_short_name: str) -> None:
+        """Update the course's short name, typically in the form of 'DEPT XXX'.
+
+        :param new_short_name: The new short name.
+        :type new_short_name: str
+        """
+        res = self._client._post(
+                endpoints.COURSE.substitute(course_id=self.id),
+                data={
+                    '_method': 'patch',
+                    'course[shortname]': new_short_name,
+                })
+        self._short_name = None
+
     def get_name(self, *, force_update: bool=False) -> str:
         """Returns the course's full name.
 
@@ -75,6 +89,20 @@ class Course:
             assert self._name is not None, \
                     'Error getting name from dashboard'
         return self._name
+
+    def set_name(self, new_name: str) -> None:
+        """Update the course's full name.
+
+        :param new_name: The new short name.
+        :type new_name: str
+        """
+        res = self._client._post(
+                endpoints.COURSE.substitute(course_id=self.id),
+                data={
+                    '_method': 'patch',
+                    'course[name]': new_name,
+                })
+        self._name = None
 
     def get_term(self, *, force_update: bool=False) -> Term:
         """Returns the course's term.
@@ -91,6 +119,21 @@ class Course:
                     'Error getting term from dashboard'
         return self._term
 
+    def set_term(self, new_term: Term) -> None:
+        """Update the course's term.
+
+        :param new_term: The new term.
+        :type new_term: Term
+        """
+        res = self._client._post(
+                endpoints.COURSE.substitute(course_id=self.id),
+                data={
+                    '_method': 'patch',
+                    'course[term]': new_term.season.name.capitalize(),
+                    'course[year]': str(new_term.year)
+                })
+        self._term = None
+
     def get_description(self, *, force_update: bool=False) -> str:
         """Returns the description for the course.
 
@@ -105,6 +148,20 @@ class Course:
             assert self._description is not None, \
                     'Error getting description from dashboard'
         return self._description
+
+    def set_description(self, new_description: str) -> None:
+        """Update the course's description.
+
+        :param new_description: The new description.
+        :type new_description: str
+        """
+        res = self._client._post(
+                endpoints.COURSE.substitute(course_id=self.id),
+                data={
+                    '_method': 'patch',
+                    'course[description]': new_description,
+                })
+        self._description = None
 
     def get_assignments(self) -> List[Assignment]:
         """Returns the list of assignments in the course. Raises an error if you
@@ -144,10 +201,21 @@ class Course:
         """Sets locally cached variables based on information available in the
         dashboard.
         """
-        # Fetch description from the dashboard.
+        # Fetch dashboard.
         res = self._client._get(endpoints.COURSE.substitute(course_id=self.id))
         html = lxml.html.fromstring(res.text)
 
-        # Get description from the HTML.
-        descriptions: List[str] = html.xpath('//*[contains(@class,"courseDashboard--panel-description")]//p/text()')
+        # Read short name.
+        self._short_name = html.xpath('//*[contains(@class,"sidebar--title")]//text()')[0]
+
+        # Read name.
+        self._name = html.xpath('//*[contains(@class,"sidebar--subtitle")]//text()')[0]
+
+        # Read term.
+        self._term = Term.parse(html.xpath('//*[contains(@class,"courseHeader--term")]//text()')[0])
+
+        # Read description.
+        descriptions = html.xpath('//*[contains(@class,"courseDashboard--panel-description")]'
+                                  '//p[not(contains(@class,"u-placeholderText"))]'
+                                  '/text()')
         self._description = '\n\n'.join(descriptions)

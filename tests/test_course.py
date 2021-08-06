@@ -29,6 +29,11 @@ class TestCourse(unittest.TestCase):
         self.assertFalse(course.is_instructor, 'Should not be instructor')
 
     @utils.with_login_client
+    def test_invalid_course(self, client: Client) -> None:
+        course = client.fetch_course(1) # Some invalid course ID.
+        self.assertIsNone(course)
+
+    @utils.with_login_client
     @utils.with_course(217765) # GSAPI 101.
     def test_student_course_description(self, client: Client,
                                         course: Course) -> None:
@@ -55,6 +60,34 @@ class TestCourse(unittest.TestCase):
         self.assertIn(910153, assignment_ids, 'Missing Test Online Exam')
 
     @utils.with_login_client
-    def test_invalid_course(self, client: Client) -> None:
-        course = client.fetch_course(1) # Some invalid course ID.
-        self.assertIsNone(course)
+    @utils.with_course(217774) # GSAPI 102. (Might be a different name.)
+    def test_set_short_name(self, client: Client, course: Course) -> None:
+        course.set_short_name('GSAPI 112')
+        self.assertEqual(course.get_short_name(), 'GSAPI 112')
+        course.set_short_name('GSAPI 102')
+        self.assertEqual(course.get_short_name(), 'GSAPI 102')
+
+    @utils.with_login_client
+    @utils.with_course(217774) # GSAPI 102.
+    def test_set_name(self, client: Client, course: Course) -> None:
+        course.set_name('Gradescope API Changed Name')
+        self.assertEqual(course.get_name(), 'Gradescope API Changed Name')
+        course.set_name('Gradescope API Automated Testing Bed')
+        self.assertEqual(course.get_name(),
+                         'Gradescope API Automated Testing Bed')
+
+    @utils.with_login_client
+    @utils.with_course(217774) # GSAPI 102.
+    def test_set_term(self, client: Client, course: Course) -> None:
+        course.set_term(Term(Term.Season.FALL, 2020))
+        self.assertEqual(course.get_term(), Term(Term.Season.FALL, 2020))
+        course.set_term(Term(Term.Season.FALL, 2020))
+        self.assertEqual(course.get_term(), Term(Term.Season.FALL, 2020))
+
+    @utils.with_login_client
+    @utils.with_course(217774) # GSAPI 102.
+    def test_set_description(self, client: Client, course: Course) -> None:
+        course.set_description('Changed description.')
+        self.assertEqual(course.get_description(), 'Changed description.')
+        course.set_description('')
+        self.assertEqual(course.get_description(), '')
