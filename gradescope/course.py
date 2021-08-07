@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 import functools
+import json
 import re
 from typing import List, Optional, TYPE_CHECKING
 
@@ -10,6 +11,7 @@ import lxml.html
 from . import endpoints
 from .assignment import Assignment
 from .error import GSNotAuthorizedException
+from .member import Member
 from .term import Term
 
 if TYPE_CHECKING:
@@ -40,6 +42,8 @@ class Course:
                                   compare=False)
     _description: Optional[str] = field(default=None, repr=False, hash=False,
                                         compare=False)
+    _members: Optional[List[Member]] = field(default=None, repr=False,
+                                             hash=False, compare=False)
 
     @property
     def is_instructor(self) -> bool:
@@ -228,6 +232,19 @@ class Course:
                 return assignment
         return None
 
+    def get_members(self, force: bool=False) -> List[Member]:
+        """Returns the list of members (e.g. students, instrcutors. etc.) of the
+        course.
+
+        :returns: A list of members.
+        :rtype: list[Member]
+        """
+        if self._members is None or force:
+            self._read_roster()
+            assert self._members is not None, \
+                    'Error getting members from roster'
+        return self._members
+
     def _read_dashboard(self) -> None:
         """Sets locally cached variables based on information available in the
         dashboard.
@@ -250,3 +267,33 @@ class Course:
                                   '//p[not(contains(@class,"u-placeholderText"))]'
                                   '/text()')
         self._description = '\n\n'.join(descriptions)
+
+    def _read_roster(self) -> None:
+        """Sets locally cached variables based on information available in the
+        course's roster page.
+        """
+        # Read roster table. All data can be found in the Edit button for each
+        # member in the roster, so we will use this.
+        res = self._client._get(endpoints.COURSE_MEMBERSHIP.substitute(
+                course_id=self.id))
+        html = lxml.html.fromstring(res.text)
+        rows = html.xpath(f'//tr[contains(@class,"rosterRow")]')
+        self._members = []
+        for row in rows:
+            elems = row.xpath(f'.//td')
+            edit_elem = row.xpath(f'.//*[@data-id]')[0]
+            cm_data = json.loads(edit_elem.xpath('@data-cm')[0])
+
+            member_id = int(edit_elem.xpath('@data-id')[0])
+            name = cm_data['full_name']
+            email = edit_elem.xpath('@data-email')[0]
+            sid = int(cm_data['sid']) if cm_data['sid'] != '' else -1
+            role_str = elems[2].xpath('//select//option[@selected="selected"]/text()')[0]
+            role = Member.Role[role_str.upper()]
+            active_canvas_elems = elems[4].xpath('//*[@data-sort="1"]')
+            _canvas_connected = len(active_canvas_elems) > 0
+
+            self._members.append(Member(id=member_id, _client=self._client,
+                                        _course=self, _name=name, _email=email,
+                                        _sid=sid, _role=role,
+                                        _canvas_connected=_canvas_connected))

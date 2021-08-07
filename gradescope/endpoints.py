@@ -8,6 +8,7 @@ LOGOUT = f'{BASE}/logout'
 
 COURSE = string.Template(f'{BASE}/courses/${{course_id}}')
 COURSE_ASSIGNMENTS = string.Template(f'{COURSE.template}/assignments')
+COURSE_MEMBERSHIP = string.Template(f'{COURSE.template}/memberships')
 COURSE_EDIT = string.Template(f'{COURSE.template}/edit')
 
 ASSIGNMENT = string.Template(f'{COURSE_ASSIGNMENTS.template}/${{assignment_id}}')

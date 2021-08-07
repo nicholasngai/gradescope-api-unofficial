@@ -107,3 +107,13 @@ class TestCourse(unittest.TestCase):
         self.assertIn(1400962, assignment_ids, 'Missing Test Bubble Sheet')
         self.assertIn(1400964, assignment_ids,
                       'Missing Test Programming Assignment')
+
+    @utils.with_login_client
+    @utils.with_course(217765) # GSAPI 101.
+    def test_member_list(self, client: Client, course: Course) -> None:
+        members = course.get_members()
+        member_ids = [member.id for member in members]
+        self.assertIn(9420701, member_ids,
+                      'Missing Gradescope API Test Account')
+        self.assertIn(9420657, member_ids, 'Missing Test Instructor')
+        self.assertIn(12197620, member_ids, 'Missing Test Student')
