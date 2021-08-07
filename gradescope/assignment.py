@@ -7,7 +7,7 @@ from typing import Optional, TYPE_CHECKING
 
 import lxml.html
 
-from .endpoints import ASSIGNMENT_EDIT
+from . import endpoints
 from .error import GSInternalException, GSNotAuthorizedException
 
 if TYPE_CHECKING:
@@ -77,8 +77,9 @@ class Assignment:
         settings page.
         """
         # Fetch settings.
-        res = self._client._get(ASSIGNMENT_EDIT.substitute(
-                course_id=self._course.id, assignment_id=self.id))
+        res = self._client._get(endpoints.ASSIGNMENT_EDIT.substitute(
+                                course_id=self._course.id,
+                                assignment_id=self.id))
         html = lxml.html.fromstring(res.text)
 
         # Read assignment name.
